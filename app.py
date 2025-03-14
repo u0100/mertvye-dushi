@@ -1,8 +1,12 @@
+import logging
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import tensorflow as tf
 import numpy as np
 import os
+
+# Настраиваем логирование
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "https://vadim-s-portfolio.vercel.app"}})  # Разрешаем доступ только с указанного домена
@@ -43,12 +47,17 @@ def generate_text(model, start_string, num_generate=1000, temperature=0.6):
 @app.route('/generate', methods=['POST'])
 def generate():
     data = request.json
+    logging.info(f"Received request: {data}")  # Логируем входные данные
+
     start_string = data.get("start_string", "Чичиков произнес: ")
     num_generate = int(data.get("num_generate", 70))
     temperature = float(data.get("temperature", 0.8))
-    
+
     generated_text = generate_text(model, start_string, num_generate, temperature)
+    
+    logging.info(f"Generated text: {generated_text}")  # Логируем выходные данные
     return jsonify({"generated_text": generated_text})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
+
