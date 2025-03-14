@@ -12,8 +12,8 @@ app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "https://vadim-s-portfolio.vercel.app"}})  # Разрешаем доступ только с указанного домена
 
 # Пути к файлам
-MODEL_PATH = "./text_generation_model.h5"
-TEXT_PATH = "./mertvye-dushi.txt"
+MODEL_PATH = "https://github.com/u0100/mertvye-dushi/blob/main/text_generation_model_v2.h5"
+TEXT_PATH = "https://github.com/u0100/mertvye-dushi/blob/main/mertvye-dushi.txt"
 
 # Загружаем текст книги
 with open(TEXT_PATH, 'r', encoding='utf-8') as f:
