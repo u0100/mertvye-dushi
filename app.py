@@ -4,6 +4,7 @@ from flask_cors import CORS
 import tensorflow as tf
 import numpy as np
 import os
+import requests
 
 # Настраиваем логирование
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -11,9 +12,30 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "https://vadim-s-portfolio.vercel.app"}})  # Разрешаем доступ только с указанного домена
 
-# Пути к файлам
-MODEL_PATH = "https://github.com/u0100/mertvye-dushi/blob/main/text_generation_model_v2.h5"
-TEXT_PATH = "https://github.com/u0100/mertvye-dushi/blob/main/mertvye-dushi.txt"
+# Ссылки на файлы
+MODEL_URL = "https://raw.githubusercontent.com/u0100/mertvye-dushi/main/text_generation_model_v2.h5"
+TEXT_URL = "https://raw.githubusercontent.com/u0100/mertvye-dushi/main/mertvye-dushi.txt"
+
+# Локальные пути для временного хранения файлов
+MODEL_PATH = "/tmp/text_generation_model_v2.h5"
+TEXT_PATH = "/tmp/mertvye-dushi.txt"
+
+# Функция для скачивания файлов
+def download_file(url, save_path):
+    response = requests.get(url)
+    if response.status_code == 200:
+        with open(save_path, "wb") as f:
+            f.write(response.content)
+        logging.info(f"Файл {save_path} загружен успешно!")
+    else:
+        logging.error(f"Ошибка загрузки файла: {url}")
+        raise Exception(f"Не удалось скачать файл: {url}")
+
+# Скачиваем файлы
+if not os.path.exists(MODEL_PATH):
+    download_file(MODEL_URL, MODEL_PATH)
+if not os.path.exists(TEXT_PATH):
+    download_file(TEXT_URL, TEXT_PATH)
 
 # Загружаем текст книги
 with open(TEXT_PATH, 'r', encoding='utf-8') as f:
@@ -27,6 +49,7 @@ idx2char = np.array(vocab)
 # Загружаем обученную модель
 model = tf.keras.models.load_model(MODEL_PATH)
 
+# Функция генерации текста
 def generate_text(model, start_string, num_generate=1000, temperature=0.6):
     input_eval = [char2idx[s] for s in start_string if s in char2idx]
     input_eval = tf.expand_dims(input_eval, 0)
@@ -60,4 +83,3 @@ def generate():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
-
