@@ -5,25 +5,21 @@ import tensorflow as tf
 import numpy as np
 import os
 from supabase import create_client, Client
-from dotenv import load_dotenv  # Импортируем библиотеку для работы с .env
+from dotenv import load_dotenv
 
-# Загружаем переменные окружения из файла .env
+# Загружаем переменные окружения
 load_dotenv()
 
 # Настраиваем логирование
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 app = Flask(__name__)
-CORS(app)  # Разрешаем доступ для всех доменов
+CORS(app, resources={r"/*": {"origins": "https://mertvye-dushi.vercel.app"}})  # Разрешаем доступ только для фронтенда
 
 # Получаем переменные окружения
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 BUCKET_NAME = os.getenv("BUCKET_NAME")
-
-# Проверяем, что переменные окружения загружены
-if not SUPABASE_URL or not SUPABASE_KEY or not BUCKET_NAME:
-    raise ValueError("Не удалось загрузить переменные окружения. Проверьте файл .env")
 
 # Инициализация Supabase клиента
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
@@ -35,11 +31,8 @@ TEXT_PATH = "/tmp/mertvye-dushi.txt"
 # Функция для скачивания файлов из Supabase Storage
 def download_file_from_supabase(file_name, save_path):
     try:
-        # Получаем URL для скачивания файла
         res = supabase.storage.from_(BUCKET_NAME).get_public_url(file_name)
         file_url = res
-
-        # Скачиваем файл
         response = requests.get(file_url)
         if response.status_code == 200:
             with open(save_path, "wb") as f:
@@ -91,7 +84,7 @@ def generate_text(model, start_string, num_generate=1000, temperature=0.6):
 @app.route('/generate', methods=['POST'])
 def generate():
     data = request.json
-    logging.info(f"Received request: {data}")  # Логируем входные данные
+    logging.info(f"Received request: {data}")
 
     start_string = data.get("start_string", "Чичиков произнес: ")
     num_generate = int(data.get("num_generate", 70))
@@ -99,7 +92,7 @@ def generate():
 
     generated_text = generate_text(model, start_string, num_generate, temperature)
     
-    logging.info(f"Generated text: {generated_text}")  # Логируем выходные данные
+    logging.info(f"Generated text: {generated_text}")
     return jsonify({"generated_text": generated_text})
 
 if __name__ == '__main__':
